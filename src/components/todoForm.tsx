@@ -25,7 +25,7 @@ export const Todo = () => {
         TodoResponse & { usertodos: Tododata[] }
       >("/api/v1/todos/", { withCredentials: true });
       setTodos(response.data.usertodos);
-      setMessage(""); // Clear message on fetch
+      setMessage("");
     } catch (error) {
       const err = error as AxiosError<TodoResponse>;
       setMessage(err.response?.data?.message || "Error fetching todos");
@@ -39,9 +39,9 @@ export const Todo = () => {
         withCredentials: true,
       });
       setMessage(response.data.message || "Todo added successfully");
-      setTitle(""); // Clear title
-      setDescription(""); // Clear description
-      fetchTodos(); // Fetch updated todos
+      setTitle("");
+      setDescription("");
+      fetchTodos();
     } catch (error) {
       const err = error as AxiosError<TodoResponse>;
       setMessage(err.response?.data?.message || "Todo addition failed");
@@ -54,7 +54,7 @@ export const Todo = () => {
         withCredentials: true,
       });
       setMessage(response.data.message || "Todo deleted successfully");
-      fetchTodos(); // Fetch updated todos
+      fetchTodos();
     } catch (error) {
       const err = error as AxiosError<TodoResponse>;
       setMessage(err.response?.data?.message || "Error deleting todo");
@@ -62,10 +62,9 @@ export const Todo = () => {
   };
 
   const toggleTodo = async (id: string, currentStatus: boolean) => {
-    const newStatus = !currentStatus; // Toggle the status
+    const newStatus = !currentStatus;
     const data = { markedAsCompleted: newStatus };
     try {
-      // Optimistically update the state first
       setTodos((prevTodos) =>
         prevTodos.map((todo) =>
           todo._id === id ? { ...todo, markedAsCompleted: newStatus } : todo
@@ -83,7 +82,6 @@ export const Todo = () => {
       setMessage(response.data.message || "Todo updated successfully");
     } catch (error) {
       const err = error as AxiosError<TodoResponse>;
-      // If error occurs, revert the optimistic update
       setTodos((prevTodos) =>
         prevTodos.map((todo) =>
           todo._id === id ? { ...todo, markedAsCompleted: currentStatus } : todo
@@ -93,15 +91,53 @@ export const Todo = () => {
     }
   };
 
+  const editTodo = async (id: string) => {
+    const updatedTitle = prompt("Enter new title:");
+    const updatedDescription = prompt("Enter new description:");
+
+    if (!updatedTitle || !updatedDescription) {
+      setMessage("Title and description are required");
+      return;
+    }
+
+    const data = {
+      newTitle: updatedTitle,
+      newDescription: updatedDescription,
+    };
+
+    try {
+      setTodos((prevTodos) =>
+        prevTodos.map((todo) =>
+          todo._id === id
+            ? { ...todo, title: updatedTitle, description: updatedDescription }
+            : todo
+        )
+      );
+
+      const response = await axios.patch<TodoResponse>(
+        `/api/v1/todos/${id}`,
+        data,
+        {
+          withCredentials: true,
+        }
+      );
+
+      setMessage(response.data.message || "Todo updated successfully");
+    } catch (error) {
+      const err = error as AxiosError<TodoResponse>;
+      setMessage(err.response?.data?.message || "Error updating todo");
+      fetchTodos();
+    }
+  };
+
   useEffect(() => {
-    fetchTodos(); // Fetch todos on component mount
+    fetchTodos();
   }, []);
 
   return (
     <div>
       <h3>Todo List</h3>
-      {message && <p style={{ color: "red" }}>{message}</p>}{" "}
-      {/* Display messages */}
+      {message && <p style={{ color: "red" }}>{message}</p>}
       <div>
         <input
           type="text"
@@ -134,6 +170,7 @@ export const Todo = () => {
                   ? "Mark as Incomplete"
                   : "Mark as Completed"}
               </button>
+              <button onClick={() => editTodo(todo._id)}>Edit Todo</button>
             </li>
           ))
         ) : (
