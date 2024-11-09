@@ -19,7 +19,7 @@ export const Login: React.FC = () => {
   });
   const [errorMessage, setErrorMessage] = useState<string>("");
   const navigate = useNavigate();
-  const { setAuthenticated } = useAuth();
+  const { login } = useAuth(); // Use login function from AuthContext
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -31,13 +31,9 @@ export const Login: React.FC = () => {
     setErrorMessage("");
 
     try {
-      const response = await axios.post<LoginResponse>(
-        "http://localhost:3100/api/v1/users/login",
-        loginData,
-        { withCredentials: true }
-      );
-      setAuthenticated(true); // Set authenticated status
-      navigate("/dashboard"); // Redirect to dashboard
+      // Use the login function from AuthContext to handle login
+      await login(loginData);
+      navigate("/dashboard");
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
         const axiosError = error as AxiosError<LoginResponse>;

@@ -1,44 +1,61 @@
+// AuthContext.tsx
+
 import React, {
   createContext,
   useState,
-  useEffect,
-  ReactNode,
   useContext,
+  ReactNode,
+  useEffect,
 } from "react";
 import axios from "axios";
 
-interface AuthContextType {
-  isAuthenticated: boolean;
-  setAuthenticated: (value: boolean) => void;
+interface AuthContextProps {
+  user: any | null;
+  login: (credentials: any) => Promise<void>;
   logout: () => Promise<void>;
+  refreshToken: () => Promise<void>;
+  loading: boolean; // New loading state
 }
 
-export const AuthContext = createContext<AuthContextType | undefined>(
-  undefined
-);
+const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => {
-  const [isAuthenticated, setAuthenticated] = useState(false);
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<any | null>(null);
+  const [loading, setLoading] = useState<boolean>(true); // Initialize loading to true
 
   useEffect(() => {
-    const checkAuthStatus = async () => {
+    const fetchUser = async () => {
       try {
-        await axios.post(
-          "http://localhost:3100/api/v1/users/refresh-access-token",
-          {},
-          { withCredentials: true }
+        const response = await axios.get(
+          "http://localhost:3100/api/v1/users/fetch",
+          {
+            withCredentials: true,
+          }
         );
-        setAuthenticated(true);
+        setUser(response.data.user);
       } catch (error) {
-        console.error("User is not authenticated", error);
-        setAuthenticated(false);
+        console.error("Failed to fetch user", error);
+      } finally {
+        setLoading(false); // Set loading to false after fetch completes
       }
     };
-
-    checkAuthStatus();
+    fetchUser();
   }, []);
+
+  const login = async (credentials: any) => {
+    try {
+      const response = await axios.post(
+        "http://localhost:3100/api/v1/users/login",
+        credentials,
+        {
+          withCredentials: true,
+        }
+      );
+      setUser(response.data.user);
+    } catch (error) {
+      console.error("Login failed", error);
+    }
+  };
 
   const logout = async () => {
     try {
@@ -47,14 +64,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         {},
         { withCredentials: true }
       );
-      setAuthenticated(false);
+      setUser(null);
     } catch (error) {
       console.error("Logout failed", error);
     }
   };
 
+  const refreshToken = async () => {
+    try {
+      await axios.get(
+        "http://localhost:3100/api/v1/users/refresh-access-token",
+        {
+          withCredentials: true,
+        }
+      );
+    } catch (error) {
+      console.error("Failed to refresh access token", error);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, setAuthenticated, logout }}>
+    <AuthContext.Provider
+      value={{ user, login, logout, refreshToken, loading }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -62,7 +94,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;

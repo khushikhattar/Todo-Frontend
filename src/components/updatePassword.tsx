@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import axios, { AxiosError } from "axios";
 
 interface UpdatePasswordData {
-  password: string;
+  oldPassword: string;
+  newPassword: string;
 }
 
 interface UpdatePasswordResponse {
@@ -10,14 +11,15 @@ interface UpdatePasswordResponse {
 }
 
 export const UpdatePassword: React.FC = () => {
-  const [password, setPassword] = useState<string>("");
+  const [oldPassword, setOldPassword] = useState<string>("");
+  const [newPassword, setNewPassword] = useState<string>("");
   const [cPassword, setCPassword] = useState<string>("");
   const [message, setMessage] = useState<string>("");
 
   const updatePassword = async () => {
-    const data: UpdatePasswordData = { password };
+    setMessage("");
 
-    if (password !== cPassword) {
+    if (newPassword !== cPassword) {
       setMessage("Passwords do not match.");
       showAlert();
       return;
@@ -26,7 +28,11 @@ export const UpdatePassword: React.FC = () => {
     try {
       const response = await axios.patch<UpdatePasswordResponse>(
         "http://localhost:3100/api/v1/users/update-password",
-        data
+        {
+          oldpassword: oldPassword,
+          newpassword: newPassword,
+        },
+        { withCredentials: true }
       );
       setMessage(response.data.message || "Password update successful");
       showAlert();
@@ -51,23 +57,37 @@ export const UpdatePassword: React.FC = () => {
     <>
       <div>
         <label>
-          Enter New Password:
+          Enter Old Password:
           <input
             type="password"
-            placeholder="New Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Old Password"
+            value={oldPassword}
+            onChange={(e) => setOldPassword(e.target.value)}
+            required
           />
         </label>
       </div>
       <div>
         <label>
-          Confirm Password:
+          Enter New Password:
+          <input
+            type="password"
+            placeholder="New Password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            required
+          />
+        </label>
+      </div>
+      <div>
+        <label>
+          Confirm New Password:
           <input
             type="password"
             placeholder="Confirm New Password"
             value={cPassword}
             onChange={(e) => setCPassword(e.target.value)}
+            required
           />
         </label>
       </div>

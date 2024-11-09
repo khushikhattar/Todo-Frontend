@@ -1,18 +1,21 @@
-import React, { useContext } from "react";
+import React from "react";
 import { Outlet, Link } from "react-router-dom";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
-import { AuthContext } from "../contexts/AuthContext";
+import { useAuth } from "../contexts/AuthContext";
 
 const Layout: React.FC = () => {
-  const authContext = useContext(AuthContext);
-  const isAuthenticated = authContext?.isAuthenticated;
+  const { user, loading } = useAuth(); // Access loading from useAuth
+
+  if (loading) {
+    return <div>Loading...</div>; // Show loading spinner or message if loading
+  }
 
   return (
     <div>
       <Header />
       <nav>
-        {!isAuthenticated ? (
+        {!user ? (
           <>
             <Link to="/register">Register</Link>
             <Link to="/login">Login</Link>

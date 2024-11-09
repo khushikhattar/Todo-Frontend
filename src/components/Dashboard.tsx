@@ -3,14 +3,14 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
 export const Dashboard: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { user } = useAuth(); // Check if user is defined for authentication
 
   return (
     <div>
       <h2>Dashboard</h2>
       <nav>
         <ul>
-          {isAuthenticated ? (
+          {user ? ( // Check if user is logged in
             <>
               <li>
                 <Link to="/todos">Go to Todos</Link>
